@@ -28,7 +28,7 @@ On success that will output a file named target/scala-2.12/rrdagg-assembly-1.0.j
 
 <prog-name> can be java -jar path/to/rrdagg-assembly.jar or a batch file wrapping that.
 
-If the first argument after the rpogram name starts with a dash it will be treated as an
+If the first argument after the program name starts with a dash it will be treated as an
 option. Currently only one option is supported and that is a path to rrdtool executable
 after an -r or --rrdtool. If that option is not specified rrdtool is expected to be
 on the PATH.
