@@ -38,12 +38,12 @@ class RRDDump(rrdtoolCmd: String, rrdFile: String) {
         getChildText(n, "name"),
         getChildText(n, "type"),
         getChildText(n, "minimal_heartbeat").toInt,
-        getChildText(n, "min").toDouble,
-        getChildText(n, "max").toDouble
+        getChildDouble(n, "min"),
+        getChildDouble(n, "max")
       ),
       RRDDsPdp(
-        getChildText(n, "last_ds").toDouble,
-        getChildText(n, "value").toDouble,
+        getChildDouble(n, "last_ds"),
+        getChildDouble(n, "value"),
         getChildText(n, "unknown_sec").toInt
       )
     )
@@ -62,21 +62,21 @@ class RRDDump(rrdtoolCmd: String, rrdFile: String) {
       val rowNode = seq(1)
       if (rowNode.label != "row")
         throw new RRDDumpException(s"row node has wrong label: ${rowNode.label}, $rowNode")
-      val vals = rowNode.child.filter(_.label == "v").map(_.text.toDouble).toList
+      val vals = rowNode.child.filter(_.label == "v").map(n => parseDouble(n.text)).toList
       RRDRow(ts, vals)
     }.toList
     val cf = getChildText(n, "cf")
     val ppr = getChildText(n, "pdp_per_row").toInt
     val paramsXff = n.child.find(_.label == "params").map { pn =>
-      getChildText(pn, "xff").toDouble
+      getChildDouble(pn, "xff")
     }.get
 
     val cdpPrep = n.child.find(_.label == "cdp_prep").map { pn =>
       pn.child.filter(_.label == "ds").toList.map { dsn =>
         RRDCdpPrepDs(
-          getChildText(dsn, "primary_value").toDouble,
-          getChildText(dsn, "secondary_value").toDouble,
-          getChildText(dsn, "value").toDouble,
+          getChildDouble(dsn, "primary_value"),
+          getChildDouble(dsn, "secondary_value"),
+          getChildDouble(dsn, "value"),
           getChildText(dsn, "unknown_datapoints").toInt
         )
       }
@@ -95,6 +95,21 @@ class RRDDump(rrdtoolCmd: String, rrdFile: String) {
     retOpt.get
   }
 
+  private def getChildDouble(parent: Node, label: String): Double = {
+    val retStr = getChildText(parent, label)
+    parseDouble(retStr)
+  }
+
+  private def parseDouble(str: String): Double = {
+    if ("(?i)nan".r.findFirstMatchIn(str).isDefined)
+      Double.NaN
+    else if ( "(?i)-inf".r.findFirstMatchIn(str).isDefined)
+      Double.NegativeInfinity
+    else if ( "(?i)inf".r.findFirstMatchIn(str).isDefined)
+      Double.PositiveInfinity
+    else
+      str.toDouble
+  }
 }
 
 object RRDDump {
